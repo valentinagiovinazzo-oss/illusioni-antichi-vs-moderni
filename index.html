@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L'Enigma dello Zibaldone - Escape Room Leopardi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        playfair: ['Playfair Display', 'serif'],
+                        handwriting: ['Special Elite', 'cursive'],
+                    },
+                    colors: {
+                        parchment: '#f4e4bc',
+                        parchmentDark: '#dcc693',
+                        ink: '#1a0f07',
+                        crimsonAccent: '#8b0000',
+                        candleGold: '#d4af37',
+                        darkWood: '#0d0705',
+                        panelWood: '#1c120c'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0b0604;
+            background-image: 
+                radial-gradient(circle at 50% 15%, rgba(212, 175, 55, 0.09) 0%, transparent 65%),
+                radial-gradient(circle at 85% 85%, rgba(139, 0, 0, 0.08) 0%, transparent 55%);
+            color: #e5d5be;
+            user-select: none;
+        }
+
+        .parchment-card {
+            background: linear-gradient(135deg, #f5e6c4 0%, #e5cc96 100%);
+            box-shadow: 
+                0 6px 25px rgba(0, 0, 0, 0.8),
+                inset 0 0 35px rgba(139, 69, 19, 0.25);
+            border: 2px solid #c8a86b;
+        }
+
+        .option-btn {
+            background: rgba(22, 13, 8, 0.9);
+            border: 1px solid #6b4d29;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #d4af37;
+            background: rgba(45, 28, 14, 0.95);
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+            transform: translateX(4px);
+        }
+
+        .option-btn.selected {
+            border-color: #d4af37;
+            background: rgba(70, 45, 20, 0.95);
+            box-shadow: inset 0 0 12px rgba(212, 175, 55, 0.4), 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .candle-flicker {
+            animation: flicker 4s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 0.92; transform: scale(1); }
+            25% { opacity: 1; transform: scale(1.008); }
+            50% { opacity: 0.85; transform: scale(0.995); }
+            75% { opacity: 0.96; transform: scale(1.01); }
+        }
+
+        .timer-warning {
+            animation: pulse-red 0.8s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { color: #ef4444; text-shadow: 0 0 12px rgba(239, 68, 68, 0.8); }
+            50% { color: #991b1b; text-shadow: 0 0 3px rgba(153, 27, 27, 0.4); }
+        }
+
+        .flash-penalty {
+            animation: flash-red-bg 0.5s ease;
+        }
+
+        @keyframes flash-red-bg {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(139, 0, 0, 0.35); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #100804;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a321a;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body id="body-root" class="min-h-screen flex flex-col justify-between font-playfair p-3 sm:p-6 overflow-x-hidden">
+
+    <!-- Header -->
+    <header class="max-w-4xl mx-auto w-full text-center border-b border-amber-900/40 pb-4 mb-4 relative">
+        <div class="absolute right-0 top-0 flex items-center space-x-2">
+            <button id="audio-toggle" title="Attiva/Disattiva Audio" class="p-2 rounded-full bg-panelWood border border-amber-900/60 text-amber-300 hover:text-amber-100 transition">
+                <svg id="audio-icon-on" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                <svg id="audio-icon-off" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+            </button>
+        </div>
+        <h1 class="font-cinzel text-2xl sm:text-4xl text-amber-200 tracking-wider font-bold candle-flicker">
+            STUDIO DI RECANATI: IL QUIZ DELLO ZIBALDONE
+        </h1>
+        <p class="text-xs sm:text-sm text-amber-500/80 italic mt-1">
+            "Ed il vero inaridì le felici illusioni dei primi tempi..."
+        </p>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-4xl mx-auto w-full flex-grow flex flex-col justify-between space-y-5">
+        
+        <!-- Status Bar: Timer & Progress -->
+        <div class="bg-panelWood border border-amber-900/60 rounded-xl p-4 shadow-2xl flex flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-xs uppercase tracking-widest text-amber-500 font-sans hidden sm:inline">Avanzamento:</span>
+                <span id="progress-text" class="font-cinzel text-base sm:text-lg text-amber-300 font-bold">Domanda 1 di 4</span>
+            </div>
+
+            <!-- Countdown Timer Box -->
+            <div class="flex items-center space-x-3 bg-black/60 px-4 py-2 rounded-lg border border-amber-800/50">
+                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="text-right">
+                    <span class="text-[9px] uppercase tracking-widest text-amber-500 block">Tempo Rimasto</span>
+                    <span id="timer-display" class="font-cinzel text-xl sm:text-2xl font-bold text-amber-300">02:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Box Container -->
+        <div id="quiz-card" class="parchment-card p-5 sm:p-8 rounded-xl text-ink relative border-2 border-amber-700/60 flex flex-col justify-between min-h-[380px]">
+            
+            <!-- Question Content -->
+            <div class="space-y-4">
+                <div class="flex justify-between items-center border-b border-amber-900/30 pb-2">
+                    <span id="question-theme" class="font-cinzel text-xs font-bold text-amber-900 uppercase tracking-widest">
+                        TEMA: APOLLO & IL SOLE
+                    </span>
+                    <span id="question-source" class="text-xs font-handwriting text-amber-800">
+                        Zibaldone
+                    </span>
+                </div>
+
+                <!-- Quote / Prompt Header -->
+                <p id="question-quote" class="font-playfair text-sm sm:text-base leading-relaxed text-amber-950 italic border-l-4 border-amber-800 pl-3 py-1 bg-amber-900/10 rounded-r">
+                    «Il sole per gli antichi non era una semplice stella...»
+                </p>
+
+                <!-- Core Question Text -->
+                <h2 id="question-title" class="font-cinzel text-base sm:text-lg font-bold text-amber-950 pt-2">
+                    Cosa diventa il sole per la fredda ragione dei moderni?
+                </h2>
+            </div>
+
+            <!-- Multiple Choice Options -->
+            <div id="options-container" class="grid grid-cols-1 gap-3 mt-6">
+                <!-- Injected dynamically via JS -->
+            </div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2 border-t border-amber-900/30">
+            <button id="reset-btn" class="px-4 py-2 bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 rounded border border-amber-800/40 text-xs sm:text-sm transition">
+                ↻ Ricomincia Quiz
+            </button>
+
+            <button id="next-btn" disabled class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-amber-800 via-amber-700 to-amber-800 hover:from-amber-700 hover:to-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-amber-100 font-cinzel font-bold tracking-wider rounded-lg shadow-lg transition duration-150">
+                CONFERMA E PROSEGUI
+            </button>
+        </div>
+    </main>
+
+    <!-- Modal Overlay (Intro / Failure / Success) -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        
+        <!-- Intro Modal -->
+        <div id="modal-intro" class="max-w-lg w-full parchment-card p-6 sm:p-8 rounded-xl text-ink relative border-4 border-amber-900 shadow-2xl">
+            <div class="text-center space-y-4">
+                <h2 class="font-cinzel text-2xl sm:text-3xl font-bold border-b-2 border-amber-900/30 pb-2 text-amber-950">
+                    L'ENIGMA DELLO ZIBALDONE
+                </h2>
+                <p class="font-playfair text-xs sm:text-sm leading-relaxed text-amber-900 italic">
+                    «Certezza è la distruzione di ogni illusione... Gli antichi vedevano la natura popolata di Dei, Ninfe ed Eroi. I moderni l'hanno disseccata col lume della fredda ragione.»
+                </p>
+                <div class="text-xs font-sans text-amber-950 bg-amber-200/60 p-3 rounded border border-amber-700/30 text-left space-y-1">
+                    <p class="font-bold">REGOLE DI SBLOCCO:</p>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Rispondi alle <strong>4 domande a risposta multipla</strong> sui temi chiave di Leopardi.</li>
+                        <li>Hai <strong>2 minuti</strong> di tempo.</li>
+                        <li><strong class="text-red-900">Penalità:</strong> Ogni risposta errata sottrae <strong>-15 secondi</strong> al timer!</li>
+                        <li>Se il tempo scade, il disincanto ti costringerà a ricominciare da zero.</li>
+                    </ul>
+                </div>
+                <button id="start-btn" class="mt-4 w-full py-3 bg-amber-950 text-amber-100 font-cinzel font-bold text-base rounded shadow-xl hover:bg-amber-900 transition tracking-widest">
+                    INIZIA LA PROVA
+                </button>
+            </div>
+        </div>
+
+        <!-- Failure Modal -->
+        <div id="modal-failure" class="hidden max-w-lg w-full bg-panelWood p-6 sm:p-8 rounded-xl text-amber-100 relative border-2 border-red-900 shadow-2xl text-center space-y-4">
+            <div class="w-16 h-16 mx-auto rounded-full bg-red-950/80 border border-red-700 flex items-center justify-center text-red-500 text-3xl">
+                ⏳
+            </div>
+            <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-red-400">
+                IL DISINCANTO HA PROSCIUGATO IL TEMPO
+            </h2>
+            <p id="failure-reason" class="text-xs sm:text-sm text-amber-200/90 leading-relaxed font-playfair">
+                Il tempo è scaduto o gli errori hanno disseccato la mente prima di poter completare il percorso filosofico.
+            </p>
+            <div class="p-3 bg-black/60 rounded border border-red-900/40 text-xs text-red-300">
+                Devi ripartire dall'inizio per dimostrare la perfetta comprensione delle illusioni leopardiane.
+            </div>
+            <button id="restart-btn" class="mt-2 w-full py-3 bg-red-950 hover:bg-red-900 text-amber-100 font-cinzel font-bold text-sm rounded border border-red-700/50 transition">
+                RICOMINCIA DA CAPO
+            </button>
+        </div>
+
+        <!-- Success Modal -->
+        <div id="modal-success" class="hidden max-w-lg w-full parchment-card p-6 sm:p-8 rounded-xl text-ink relative border-4 border-amber-600 shadow-2xl text-center space-y-5">
+            <div class="w-16 h-16 mx-auto rounded-full bg-amber-900/20 border border-amber-800 flex items-center justify-center text-amber-900 text-3xl">
+                🗝️
+            </div>
+            <h2 class="font-cinzel text-2xl sm:text-3xl font-bold text-amber-950">
+                PROVA SUPERATA!
+            </h2>
+            <p class="text-xs sm:text-sm text-amber-900 italic">
+                Hai penetrato con successo la dialettica tra l'immaginazione degli antichi e la fredda ragione dei moderni.
+            </p>
+            
+            <!-- Victory Message Code -->
+            <div class="p-5 bg-amber-950 text-amber-100 rounded-lg border-2 border-candleGold shadow-inner space-y-2">
+                <span class="text-[10px] uppercase tracking-widest text-amber-400 block font-sans">
+                    Messaggio di Sblocco Ottenuto
+                </span>
+                <p class="font-cinzel text-sm sm:text-base font-bold tracking-wide leading-snug text-candleGold">
+                    La terza parte del codice di sblocco della stanza è : <br/>
+                    <span class="text-xl sm:text-2xl underline decoration-amber-500 font-extrabold text-white block mt-2">
+                        per essere conservata.
+                    </span>
+                </p>
+            </div>
+
+            <p class="text-xs text-amber-900 font-sans">
+                Trascrivi questo codice esatto sulla scheda dell'Escape Room per proseguire!
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Toast Notification for Time Penalty -->
+    <div id="toast-penalty" class="fixed top-20 right-5 z-40 transform translate-x-80 transition-transform duration-300 bg-red-950 border border-red-600 text-red-200 px-4 py-3 rounded-lg shadow-2xl flex items-center space-x-3 text-xs sm:text-sm">
+        <span class="text-xl">⚠️</span>
+        <div>
+            <span class="font-bold block text-red-400">La fredda ragione penalizza l'errore!</span>
+            <span class="text-xs text-red-200">-15 Secondi di penalità</span>
+        </div>
+    </div>
+
+    <script>
+        // --- QUIZ QUESTIONS DATA (Based on Leopardi's Zibaldone & Table) ---
+        const QUIZ_QUESTIONS = [
+            {
+                id: 'apollo',
+                theme: 'ANTICO VS MODERNO: APOLLO',
+                source: 'Zibaldone, passim',
+                quote: '«Il sole per gli antichi non era una semplice materia inerte, ma il carro radioso d’Apollo che diffondeva vita, poesia e calda illusione sul mondo.»',
+                question: 'Con l’avvento della ragione moderna e della scienza, come viene svelata la vera natura di Apollo (il Sole)?',
+                options: [
+                    { text: 'A) Come una divinità benevola ma invisibile agli occhi umani.', correct: false },
+                    { text: 'B) Come una realtà fisica inerte e una massa di materia/stella.', correct: true },
+                    { text: 'C) Come un inganno temporaneo creato dai poeti rinascimentali.', correct: false },
+                    { text: 'D) Come il simbolo eterno dell’immortalità dell’anima.', correct: false }
+                ]
+            },
+            {
+                id: 'ninfa',
+                theme: 'NATURA: BENIGNA VS MATRIGNA',
+                source: 'Zibaldone, 21-24',
+                quote: '«Ciascun albero, fonte o ruscello albergava una ninfa o un nume. La natura appariva agli antichi come madre amorosa e viva.»',
+                question: 'Qual è il verdetto della fredda ragione moderna nei confronti della Natura e delle Ninfe antiche?',
+                options: [
+                    { text: 'A) La Natura viene svelata come inerte materia e meccanismo indifferente.', correct: true },
+                    { text: 'B) La Natura rimane una madre protettiva per chiunque coltivi la poesia.', correct: false },
+                    { text: 'C) Le ninfe si sono semplicemente trasformate in leggi matematiche umane.', correct: false },
+                    { text: 'D) La ragione dimostra che gli antichi avevano ragione nel venerarla.', correct: false }
+                ]
+            },
+            {
+                id: 'eroe',
+                theme: 'GLORIA ED EROISMO',
+                source: 'Zibaldone, 84-85',
+                quote: '«L’eroismo e il desiderio di gloria imperitura animavano gli antichi a compiere gesta magnanime, sostenuti da una felice illusione.»',
+                question: 'Che valore assume la gloria dell’Eroe quando viene analizzata dal "lume del vero" dei moderni?',
+                options: [
+                    { text: 'A) Rappresenta l’unico scopo razionale della vita umana.', correct: false },
+                    { text: 'B) È la prova provata della superiorità morale dei moderni.', correct: false },
+                    { text: 'C) Viene ridotta alla vanità del tutto e a un’ombra destinata all’oblio.', correct: true },
+                    { text: 'D) Diventa un dovere civico garantito dal progresso scientifico.', correct: false }
+                ]
+            },
+            {
+                id: 'amore',
+                theme: 'IL SENTIMENTO DELL’AMORE',
+                source: 'Zibaldone, 165',
+                quote: '«L’amore è l’ultima illusione a morire; esso pareva agli antichi il sentimento più vicino alla divinità e alla felicità suprema.»',
+                question: 'A cosa viene ridotto il sentimento dell’Amore secondo il freddo disincanto della modernità?',
+                options: [
+                    { text: 'A) Ad un legame indissolubile garantito dalla ragione universale.', correct: false },
+                    { text: 'B) Ad un semplice inganno dei sensi e a un’amara delusione.', correct: true },
+                    { text: 'C) Ad un mito mai esistito neppure nella mente degli antichi.', correct: false },
+                    { text: 'D) Ad una verità immutabile che resiste a qualsiasi analisi razionale.', correct: false }
+                ]
+            }
+        ];
+
+        // --- GAME STATE ---
+        const INITIAL_TIME = 120; // 2 minutes
+        let currentQuestionIdx = 0;
+        let selectedOptionIdx = null;
+        let timeLeft = INITIAL_TIME;
+        let timerInterval = null;
+        let soundEnabled = true;
+
+        // --- WEB AUDIO API SYNTHESIZER ---
+        class SoundEffects {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playSelect() {
+                if (!soundEnabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(350, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.04);
+                gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.04);
+            }
+            playError() {
+                if (!soundEnabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(90, this.ctx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.3);
+            }
+            playSuccess() {
+                if (!soundEnabled) return;
+                this.init();
+                const notes = [261.63, 329.63, 392.00, 523.25]; // C E G C
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + (idx * 0.1));
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime + (idx * 0.1));
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + (idx * 0.1) + 0.45);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + (idx * 0.1));
+                    osc.stop(this.ctx.currentTime + (idx * 0.1) + 0.45);
+                });
+            }
+        }
+
+        const sfx = new SoundEffects();
+
+        // --- RENDER FUNCTIONS ---
+        function renderQuestion() {
+            const q = QUIZ_QUESTIONS[currentQuestionIdx];
+            selectedOptionIdx = null;
+
+            document.getElementById('progress-text').textContent = `Domanda ${currentQuestionIdx + 1} di ${QUIZ_QUESTIONS.length}`;
+            document.getElementById('question-theme').textContent = q.theme;
+            document.getElementById('question-source').textContent = q.source;
+            document.getElementById('question-quote').textContent = q.quote;
+            document.getElementById('question-title').textContent = q.question;
+
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = true;
+            nextBtn.textContent = (currentQuestionIdx === QUIZ_QUESTIONS.length - 1) ? "VERIFICA E SBLOCCA" : "CONFERMA E PROSEGUI";
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `option-btn w-full text-left p-3 sm:p-4 rounded-lg text-amber-100 text-xs sm:text-sm font-playfair font-medium tracking-wide flex items-center justify-between cursor-pointer`;
+                btn.innerHTML = `
+                    <span>${opt.text}</span>
+                    <span class="radio-indicator w-4 h-4 rounded-full border border-amber-600 flex items-center justify-center text-[10px]"></span>
+                `;
+
+                btn.addEventListener('click', () => {
+                    sfx.playSelect();
+                    selectOption(idx);
+                });
+
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(idx) {
+            selectedOptionIdx = idx;
+            const buttons = document.querySelectorAll('.option-btn');
+            
+            buttons.forEach((btn, i) => {
+                if (i === idx) {
+                    btn.classList.add('selected');
+                    btn.querySelector('.radio-indicator').innerHTML = '<span class="w-2 h-2 rounded-full bg-candleGold"></span>';
+                } else {
+                    btn.classList.remove('selected');
+                    btn.querySelector('.radio-indicator').innerHTML = '';
+                }
+            });
+
+            document.getElementById('next-btn').disabled = false;
+        }
+
+        // --- TIMER & PENALTY SYSTEM ---
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+
+                if (timeLeft <= 0) {
+                    triggerFailure("Il tempo a disposizione è terminato. La fredda ragione ha prosciugato le illusioni.");
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const display = document.getElementById('timer-display');
+            const m = Math.floor(Math.max(0, timeLeft) / 60).toString().padStart(2, '0');
+            const s = (Math.max(0, timeLeft) % 60).toString().padStart(2, '0');
+            display.textContent = `${m}:${s}`;
+
+            if (timeLeft <= 20) {
+                display.classList.add('timer-warning');
+            } else {
+                display.classList.remove('timer-warning');
+            }
+        }
+
+        function applyPenalty() {
+            sfx.playError();
+            timeLeft = Math.max(0, timeLeft - 15);
+            updateTimerDisplay();
+
+            // Screen flash effect
+            const body = document.getElementById('body-root');
+            body.classList.add('flash-penalty');
+            setTimeout(() => body.classList.remove('flash-penalty'), 500);
+
+            // Show Toast
+            const toast = document.getElementById('toast-penalty');
+            toast.classList.remove('translate-x-80');
+            setTimeout(() => {
+                toast.classList.add('translate-x-80');
+            }, 2600);
+
+            if (timeLeft <= 0) {
+                triggerFailure("La somma delle penalità ha prosciugato completamente il tempo rimanente.");
+            }
+        }
+
+        // --- GAME FLOW LOGIC ---
+        function handleNextQuestion() {
+            if (selectedOptionIdx === null) return;
+
+            const q = QUIZ_QUESTIONS[currentQuestionIdx];
+            const isCorrect = q.options[selectedOptionIdx].correct;
+
+            if (!isCorrect) {
+                applyPenalty();
+                return; // Player stays on question until they guess correctly or time runs out
+            }
+
+            // Correct choice
+            sfx.playSelect();
+            if (currentQuestionIdx < QUIZ_QUESTIONS.length - 1) {
+                currentQuestionIdx++;
+                renderQuestion();
+            } else {
+                triggerSuccess();
+            }
+        }
+
+        function triggerFailure(reason) {
+            clearInterval(timerInterval);
+            sfx.playError();
+            document.getElementById('failure-reason').textContent = reason;
+            document.getElementById('modal-overlay').classList.remove('hidden');
+            document.getElementById('modal-intro').classList.add('hidden');
+            document.getElementById('modal-failure').classList.remove('hidden');
+            document.getElementById('modal-success').classList.add('hidden');
+        }
+
+        function triggerSuccess() {
+            clearInterval(timerInterval);
+            sfx.playSuccess();
+            document.getElementById('modal-overlay').classList.remove('hidden');
+            document.getElementById('modal-intro').classList.add('hidden');
+            document.getElementById('modal-failure').classList.add('hidden');
+            document.getElementById('modal-success').classList.remove('hidden');
+        }
+
+        function restartGame() {
+            timeLeft = INITIAL_TIME;
+            currentQuestionIdx = 0;
+            selectedOptionIdx = null;
+            updateTimerDisplay();
+            renderQuestion();
+            
+            document.getElementById('modal-overlay').classList.add('hidden');
+            document.getElementById('modal-failure').classList.add('hidden');
+            document.getElementById('modal-success').classList.add('hidden');
+
+            startTimer();
+        }
+
+        // --- INIT & EVENT LISTENERS ---
+        window.onload = () => {
+            renderQuestion();
+            updateTimerDisplay();
+
+            document.getElementById('start-btn').addEventListener('click', () => {
+                sfx.playSelect();
+                document.getElementById('modal-overlay').classList.add('hidden');
+                document.getElementById('modal-intro').classList.add('hidden');
+                startTimer();
+            });
+
+            document.getElementById('next-btn').addEventListener('click', () => {
+                handleNextQuestion();
+            });
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                sfx.playSelect();
+                restartGame();
+            });
+
+            document.getElementById('restart-btn').addEventListener('click', () => {
+                sfx.playSelect();
+                restartGame();
+            });
+
+            // Audio Mute Toggle
+            document.getElementById('audio-toggle').addEventListener('click', () => {
+                soundEnabled = !soundEnabled;
+                document.getElementById('audio-icon-on').classList.toggle('hidden', !soundEnabled);
+                document.getElementById('audio-icon-off').classList.toggle('hidden', soundEnabled);
+            });
+        };
+    </script>
+</body>
+</html>
